@@ -6,6 +6,7 @@ public interface ITenantContextService
     string? GetCurrentUserId();
     string? GetCurrentUserRole();
     bool IsAdminUser();
+    bool IsTenantAdmin();
     bool CanAccessTenant(string tenantId);
     void SetCurrentUser(string userId, string? tenantId, string role);
 }
@@ -39,6 +40,12 @@ public class TenantContextService : ITenantContextService
         var tenantId = GetCurrentTenantId();
         var role = GetCurrentUserRole();
         return tenantId == null && role == "Admin";
+    }
+
+    public bool IsTenantAdmin()
+    {
+        var role = GetCurrentUserRole();
+        return role == "TenantAdmin";
     }
 
     public bool CanAccessTenant(string tenantId)

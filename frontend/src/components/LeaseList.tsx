@@ -2,17 +2,21 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, Calculator } from 'lucide-react';
 import { leaseApi } from '../services/api';
-import type { Lease } from '../types';
+import type { Lease, UserContext } from '../types';
 import { LeaseStatusLabels, PaymentFrequencyLabels } from '../types';
 import { LeaseForm } from './LeaseForm';
 
-export function LeaseList() {
+interface LeaseListProps {
+  currentUser: UserContext;
+}
+
+export function LeaseList({ currentUser }: LeaseListProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingLease, setEditingLease] = useState<Lease | null>(null);
 
   const { data: leases, isLoading, error, refetch } = useQuery({
-    queryKey: ['leases'],
-    queryFn: leaseApi.getAll,
+    queryKey: ['leases', currentUser.tenantId],
+    queryFn: () => leaseApi.getAll(currentUser.tenantId),
   });
 
   const handleEdit = (lease: Lease) => {
@@ -89,6 +93,7 @@ export function LeaseList() {
       {showForm && (
         <LeaseForm
           lease={editingLease}
+          currentUser={currentUser}
           onClose={handleFormClose}
         />
       )}

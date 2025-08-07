@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { Calendar, Play, Upload, CheckCircle } from 'lucide-react';
 import { calculationsApi } from '../services/api';
+import type { UserContext } from '../types';
 
-export function CalculationDashboard() {
+interface CalculationDashboardProps {
+  currentUser: UserContext;
+}
+
+export function CalculationDashboard({ currentUser: _currentUser }: CalculationDashboardProps) {
+  // Note: currentUser will be used for tenant-specific calculations in future iterations
   const [periodDate, setPeriodDate] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;

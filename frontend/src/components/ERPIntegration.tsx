@@ -2,8 +2,14 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Server, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { erpApi } from '../services/api';
+import type { UserContext } from '../types';
 
-export function ERPIntegration() {
+interface ERPIntegrationProps {
+  currentUser: UserContext;
+}
+
+export function ERPIntegration({ currentUser: _currentUser }: ERPIntegrationProps) {
+  // Note: currentUser will be used for tenant-specific ERP integration in future iterations
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<{
     status: string;

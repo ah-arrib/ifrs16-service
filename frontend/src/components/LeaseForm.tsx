@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { leaseApi } from '../services/api';
-import type { Lease, PaymentFrequency } from '../types';
+import type { Lease, PaymentFrequency, UserContext } from '../types';
 
 interface LeaseFormProps {
   lease?: Lease | null;
+  currentUser: UserContext;
   onClose: () => void;
 }
 
-export function LeaseForm({ lease, onClose }: LeaseFormProps) {
+export function LeaseForm({ lease, currentUser, onClose }: LeaseFormProps) {
   const [formData, setFormData] = useState({
+    tenantId: currentUser.tenantId || '',
     leaseNumber: '',
     assetDescription: '',
     commencementDate: '',
@@ -27,6 +29,7 @@ export function LeaseForm({ lease, onClose }: LeaseFormProps) {
   useEffect(() => {
     if (lease) {
       setFormData({
+        tenantId: lease.tenantId,
         leaseNumber: lease.leaseNumber,
         assetDescription: lease.assetDescription,
         commencementDate: lease.commencementDate.split('T')[0],

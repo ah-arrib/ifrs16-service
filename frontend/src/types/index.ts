@@ -1,5 +1,61 @@
+// Multi-tenant types
+export interface Tenant {
+  id: number;
+  tenantId: string;
+  tenantName: string;
+  isActive: boolean;
+  createdDate: string;
+  lastAccessDate?: string;
+  settings?: string;
+}
+
+export interface TenantSettings {
+  currency: string;
+  timeZone: string;
+  fiscalYearEnd: string;
+  enableERPIntegration: boolean;
+  erpBaseUrl?: string;
+  erpApiKey?: string;
+}
+
+export interface User {
+  id: number;
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  tenantId?: string;
+  role: string;
+  isActive: boolean;
+  createdDate: string;
+  lastLoginDate?: string;
+  fullName?: string;
+  isAdminUser?: boolean;
+  isTenantAdmin?: boolean;
+}
+
+export interface UserContext {
+  userId: string;
+  email: string;
+  fullName: string;
+  tenantId?: string;
+  role: string;
+  isAdmin: boolean;
+  isTenantAdmin: boolean;
+}
+
+export const UserRole = {
+  Admin: 'Admin',
+  TenantAdmin: 'TenantAdmin',
+  User: 'User'
+} as const;
+
+export type UserRole = typeof UserRole[keyof typeof UserRole];
+
+// Lease types with multi-tenancy
 export interface Lease {
   id: number;
+  tenantId: string; // Multi-tenant field
   leaseNumber: string;
   assetDescription: string;
   commencementDate: string;
