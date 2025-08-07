@@ -7,6 +7,10 @@ namespace Backend.Models
         public int Id { get; set; }
         
         [Required]
+        [StringLength(50)]
+        public string TenantId { get; set; } = string.Empty; // Multi-tenant isolation
+        
+        [Required]
         public string LeaseNumber { get; set; } = string.Empty;
         
         [Required]

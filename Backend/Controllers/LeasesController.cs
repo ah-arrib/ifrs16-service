@@ -12,26 +12,35 @@ namespace Backend.Controllers
         private readonly ILeaseRepository _leaseRepository;
         private readonly IIfrs16CalculationService _calculationService;
         private readonly ILeaseCalculationRepository _calculationRepository;
+        private readonly ITenantContextService _tenantContext;
         private readonly ILogger<LeasesController> _logger;
         
         public LeasesController(
             ILeaseRepository leaseRepository,
             IIfrs16CalculationService calculationService,
             ILeaseCalculationRepository calculationRepository,
+            ITenantContextService tenantContext,
             ILogger<LeasesController> logger)
         {
             _leaseRepository = leaseRepository;
             _calculationService = calculationService;
             _calculationRepository = calculationRepository;
+            _tenantContext = tenantContext;
             _logger = logger;
         }
         
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Lease>>> GetLeases()
+        public async Task<ActionResult<IEnumerable<Lease>>> GetLeases([FromQuery] string? tenantId = null)
         {
             try
             {
-                var leases = await _leaseRepository.GetAllAsync();
+                // Check tenant access for non-admin users
+                if (!_tenantContext.IsAdminUser() && tenantId != null && !_tenantContext.CanAccessTenant(tenantId))
+                {
+                    return Forbid("Access denied to tenant data");
+                }
+
+                var leases = await _leaseRepository.GetAllAsync(tenantId);
                 return Ok(leases);
             }
             catch (Exception ex)

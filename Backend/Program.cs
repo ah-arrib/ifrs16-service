@@ -1,6 +1,7 @@
 using Backend.Data;
 using Backend.Repositories;
 using Backend.Services;
+using Backend.Middleware;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,9 +21,12 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { 
         Title = "IFRS16 Service API", 
         Version = "v1",
-        Description = "API for IFRS16 lease accounting calculations and ERP integration"
+        Description = "Multi-tenant API for IFRS16 lease accounting calculations and ERP integration"
     });
 });
+
+// Add HTTP context accessor for tenant context
+builder.Services.AddHttpContextAccessor();
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -44,10 +48,13 @@ builder.Services.AddSingleton<IDbConnectionFactory>(provider =>
     new SqlConnectionFactory(connectionString));
 
 // Repository registration
+builder.Services.AddScoped<ITenantRepository, TenantRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ILeaseRepository, LeaseRepository>();
 builder.Services.AddScoped<ILeaseCalculationRepository, LeaseCalculationRepository>();
 
 // Service registration
+builder.Services.AddScoped<ITenantContextService, TenantContextService>();
 builder.Services.AddScoped<IIfrs16CalculationService, Ifrs16CalculationService>();
 builder.Services.AddScoped<ILeasePostingService, LeasePostingService>();
 
@@ -83,6 +90,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
+
+// Add tenant authorization middleware
+app.UseTenantAuthorization();
+
 app.UseAuthorization();
 app.MapControllers();
 
