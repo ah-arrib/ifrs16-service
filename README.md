@@ -91,7 +91,10 @@ A comprehensive IFRS16 lease accounting calculation service with ASP.NET Core ba
    dotnet run
    ```
 
-   The API will be available at `https://localhost:7297`
+   The API will be available at:
+   - **HTTP**: `http://localhost:5114`
+   - **HTTPS**: `https://localhost:7057`
+   - **Swagger UI**: `http://localhost:5114/` or `https://localhost:7057/`
 
 ### Frontend Setup
 
@@ -108,7 +111,7 @@ A comprehensive IFRS16 lease accounting calculation service with ASP.NET Core ba
 3. **Configure API URL:**
    - Create `.env` file in frontend directory:
    ```
-   VITE_API_URL=https://localhost:7297/api
+   VITE_API_URL=http://localhost:5114/api
    ```
 
 4. **Run the frontend:**

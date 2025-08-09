@@ -150,6 +150,8 @@ INSERT INTO Leases (
     'USD', 'ASSET-004', 0 -- Active
 );
 
+GO
+
 -- Create a view for lease summary
 CREATE VIEW vw_LeaseSummary AS
 SELECT 
@@ -195,6 +197,8 @@ LEFT JOIN (
     GROUP BY LeaseId
 ) calc_summary ON l.Id = calc_summary.LeaseId;
 
+GO
+
 -- Create stored procedure for period-end processing
 CREATE PROCEDURE sp_GetActiveLeasesByPeriod
     @PeriodDate DATE,
@@ -216,6 +220,8 @@ BEGIN
     ORDER BY l.TenantId, l.LeaseNumber;
 END;
 
+GO
+
 -- Create stored procedure for tenant management
 CREATE PROCEDURE sp_GetTenantUsers
     @TenantId NVARCHAR(50)
@@ -231,5 +237,7 @@ BEGIN
     WHERE u.TenantId = @TenantId OR u.TenantId IS NULL -- Include admin users
     ORDER BY u.Role, u.LastName, u.FirstName;
 END;
+
+GO
 
 PRINT 'IFRS16 Service database schema created successfully!';

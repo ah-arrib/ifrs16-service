@@ -33,7 +33,13 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+        policy.WithOrigins(
+                "http://localhost:5173", 
+                "http://localhost:5175", 
+                "http://localhost:3000", 
+                "https://localhost:5173",
+                "https://localhost:5175"
+              )
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -77,6 +83,9 @@ builder.Services.AddSingleton(provider =>
 
 var app = builder.Build();
 
+// Skip database connection test during startup to avoid globalization issues
+// Database connections will be tested when first API call is made
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -99,12 +108,20 @@ app.MapControllers();
 
 try
 {
-    Log.Information("Starting IFRS16 Service API");
+    Log.Information("Starting IFRS16 Service API...");
+    Log.Information("Application configured successfully");
+    Log.Information("API will be available at:");
+    Log.Information("  - HTTPS: https://localhost:7057");
+    Log.Information("  - HTTP:  http://localhost:5114");
+    Log.Information("  - Swagger UI: https://localhost:7057/ (root path)");
+    Log.Information("Application is starting and waiting for requests...");
+    
     app.Run();
 }
 catch (Exception ex)
 {
     Log.Fatal(ex, "Application terminated unexpectedly");
+    throw;
 }
 finally
 {
