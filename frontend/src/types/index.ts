@@ -147,6 +147,39 @@ export interface ERPTransaction {
   currency: string;
 }
 
+export interface CalculationPreview {
+  periodDate: string;
+  calculations: CalculationPreviewItem[];
+  summary: CalculationSummary;
+  proposedTransactions: ERPTransaction[];
+}
+
+export interface CalculationPreviewItem {
+  calculationId: number;
+  leaseId: number;
+  leaseNumber: string;
+  leaseName: string;
+  leasePayment: number;
+  interestExpense: number;
+  amortizationExpense: number;
+  beginningRightOfUseAsset: number;
+  endingRightOfUseAsset: number;
+  beginningLeaseLiability: number;
+  endingLeaseLiability: number;
+  isPostedToERP: boolean;
+  status: CalculationStatus;
+}
+
+export interface CalculationSummary {
+  totalCalculations: number;
+  unpostedCalculations: number;
+  totalLeasePayments: number;
+  totalInterestExpense: number;
+  totalAmortizationExpense: number;
+  totalRightOfUseAssets: number;
+  totalLeaseLiabilities: number;
+}
+
 export interface PeriodEndRequest {
   periodDate: string;
 }

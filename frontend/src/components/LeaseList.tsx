@@ -1,10 +1,41 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Calculator } from 'lucide-react';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  IconButton,
+  CircularProgress,
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Fab,
+  Tooltip,
+} from '@mui/material';
+import {
+  Add as PlusIcon,
+  Edit as EditIcon,
+  Delete as TrashIcon,
+  Calculate as CalculatorIcon,
+  History as HistoryIcon
+} from '@mui/icons-material';
 import { leaseApi } from '../services/api';
 import type { Lease, UserContext } from '../types';
 import { LeaseStatusLabels, PaymentFrequencyLabels } from '../types';
 import { LeaseForm } from './LeaseForm';
+import { CalculationHistory } from './CalculationHistory';
 
 interface LeaseListProps {
   currentUser: UserContext;
@@ -13,6 +44,9 @@ interface LeaseListProps {
 export function LeaseList({ currentUser }: LeaseListProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingLease, setEditingLease] = useState<Lease | null>(null);
+  const [viewingCalculations, setViewingCalculations] = useState<Lease | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [leaseToDelete, setLeaseToDelete] = useState<Lease | null>(null);
 
   const { data: leases, isLoading, error, refetch } = useQuery({
     queryKey: ['leases', currentUser.tenantId],
@@ -24,15 +58,27 @@ export function LeaseList({ currentUser }: LeaseListProps) {
     setShowForm(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this lease?')) {
+  const handleDeleteClick = (lease: Lease) => {
+    setLeaseToDelete(lease);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (leaseToDelete) {
       try {
-        await leaseApi.delete(id);
+        await leaseApi.delete(leaseToDelete.id);
         refetch();
+        setDeleteDialogOpen(false);
+        setLeaseToDelete(null);
       } catch (error) {
         console.error('Error deleting lease:', error);
       }
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setLeaseToDelete(null);
   };
 
   const handleCalculate = async (id: number) => {
@@ -44,6 +90,10 @@ export function LeaseList({ currentUser }: LeaseListProps) {
     }
   };
 
+  const handleViewCalculations = (lease: Lease) => {
+    setViewingCalculations(lease);
+  };
+
   const handleFormClose = () => {
     setShowForm(false);
     setEditingLease(null);
@@ -51,9 +101,10 @@ export function LeaseList({ currentUser }: LeaseListProps) {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat('nb-NO', {
+      style: 'decimal',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -61,34 +112,46 @@ export function LeaseList({ currentUser }: LeaseListProps) {
     return new Date(dateString).toLocaleDateString();
   };
 
+  // Show calculation history if a lease is selected
+  if (viewingCalculations) {
+    return (
+      <CalculationHistory
+        lease={viewingCalculations}
+        onBack={() => setViewingCalculations(null)}
+      />
+    );
+  }
+
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-md p-4">
-        <p className="text-red-600">Error loading leases. Please try again.</p>
-      </div>
+      <Alert severity="error" sx={{ mb: 2 }}>
+        Error loading leases. Please try again.
+      </Alert>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Lease Management</h2>
-        <button
+    <Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" component="h1">
+          Lease Management
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<PlusIcon />}
           onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
         >
-          <Plus className="h-4 w-4 mr-2" />
           New Lease
-        </button>
-      </div>
+        </Button>
+      </Box>
 
       {showForm && (
         <LeaseForm
@@ -98,85 +161,136 @@ export function LeaseList({ currentUser }: LeaseListProps) {
         />
       )}
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
-          {leases?.map((lease) => (
-            <li key={lease.id} className="px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-lg font-medium text-gray-900">
-                        {lease.leaseNumber}
-                      </p>
-                      <p className="text-sm text-gray-600">{lease.assetDescription}</p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          lease.status === 0
-                            ? 'bg-green-100 text-green-800'
-                            : lease.status === 3
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
+      <TableContainer component={Paper} elevation={2}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Lease Number</TableCell>
+              <TableCell>Asset Description</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell align="right">Payment</TableCell>
+              <TableCell>Term</TableCell>
+              <TableCell align="right">ROU Asset</TableCell>
+              <TableCell align="right">Lease Liability</TableCell>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {leases?.map((lease) => (
+              <TableRow key={lease.id} hover>
+                <TableCell>
+                  <Typography variant="body1" fontWeight="medium">
+                    {lease.leaseNumber}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" color="textSecondary">
+                    {lease.assetDescription}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={LeaseStatusLabels[lease.status]}
+                    color={
+                      lease.status === 0 ? 'success' :
+                      lease.status === 3 ? 'warning' : 'default'
+                    }
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell align="right">
+                  <Typography variant="body2">
+                    {formatCurrency(lease.leasePayment)}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    ({PaymentFrequencyLabels[lease.paymentFrequency]})
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2">
+                    {formatDate(lease.commencementDate)} - {formatDate(lease.endDate)}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Typography variant="body2">
+                    {formatCurrency(lease.initialRightOfUseAsset)}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Typography variant="body2">
+                    {formatCurrency(lease.initialLeaseLiability)}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Box display="flex" gap={1}>
+                    <Tooltip title="Calculate">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleCalculate(lease.id)}
+                        color="primary"
                       >
-                        {LeaseStatusLabels[lease.status]}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm text-gray-600">
-                    <div>
-                      <span className="font-medium">Payment:</span> {formatCurrency(lease.leasePayment)} 
-                      <span className="ml-1">({PaymentFrequencyLabels[lease.paymentFrequency]})</span>
-                    </div>
-                    <div>
-                      <span className="font-medium">Term:</span> {formatDate(lease.commencementDate)} - {formatDate(lease.endDate)}
-                    </div>
-                    <div>
-                      <span className="font-medium">ROU Asset:</span> {formatCurrency(lease.initialRightOfUseAsset)}
-                    </div>
-                    <div>
-                      <span className="font-medium">Liability:</span> {formatCurrency(lease.initialLeaseLiability)}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="ml-4 flex items-center space-x-2">
-                  <button
-                    onClick={() => handleCalculate(lease.id)}
-                    className="text-blue-600 hover:text-blue-900 p-2"
-                    title="Calculate"
-                  >
-                    <Calculator className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleEdit(lease)}
-                    className="text-gray-600 hover:text-gray-900 p-2"
-                    title="Edit"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(lease.id)}
-                    className="text-red-600 hover:text-red-900 p-2"
-                    title="Delete"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+                        <CalculatorIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="View History">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleViewCalculations(lease)}
+                        color="secondary"
+                      >
+                        <HistoryIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Edit">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEdit(lease)}
+                        color="default"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeleteClick(lease)}
+                        color="error"
+                      >
+                        <TrashIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
 
         {!leases?.length && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No leases found. Create your first lease to get started.</p>
-          </div>
+          <Box textAlign="center" py={6}>
+            <Typography color="textSecondary">
+              No leases found. Create your first lease to get started.
+            </Typography>
+          </Box>
         )}
-      </div>
-    </div>
+      </TableContainer>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete lease "{leaseToDelete?.leaseNumber}"? 
+            This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Cancel</Button>
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }

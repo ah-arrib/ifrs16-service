@@ -7,6 +7,7 @@ namespace Backend.Services
     {
         Task<bool> PostCalculationsToERPAsync(List<int> calculationIds);
         Task<bool> PostPeriodCalculationsAsync(DateTime periodDate);
+        Task<CalculationPreview> PreviewPeriodCalculationsAsync(DateTime periodDate);
         Task<ERPPostingRequest> CreatePostingRequestAsync(List<LeaseCalculation> calculations);
         Task<List<ERPTransaction>> CreateTransactionsFromCalculationAsync(LeaseCalculation calculation, Lease lease);
     }
@@ -82,6 +83,87 @@ namespace Backend.Services
             }
         }
         
+        public async Task<CalculationPreview> PreviewPeriodCalculationsAsync(DateTime periodDate)
+        {
+            try
+            {
+                _logger.LogInformation("Previewing period calculations for {PeriodDate}", periodDate);
+                
+                var calculations = await _calculationRepository.GetCalculationsForPeriodAsync(periodDate);
+                _logger.LogInformation("Found {Count} calculations for period {PeriodDate}", calculations.Count(), periodDate);
+                
+                var unpostedCalculations = calculations.Where(c => !c.IsPostedToERP && c.Status == CalculationStatus.Calculated).ToList();
+                _logger.LogInformation("Found {Count} unposted calculations for period {PeriodDate}", unpostedCalculations.Count, periodDate);
+                
+                var previewItems = new List<CalculationPreviewItem>();
+                var allTransactions = new List<ERPTransaction>();
+                
+                foreach (var calculation in calculations)
+                {
+                    _logger.LogDebug("Processing calculation {CalculationId} for lease {LeaseId}", calculation.Id, calculation.LeaseId);
+                    
+                    var lease = await _leaseRepository.GetByIdAsync(calculation.LeaseId);
+                    if (lease != null)
+                    {
+                        previewItems.Add(new CalculationPreviewItem
+                        {
+                            CalculationId = calculation.Id,
+                            LeaseId = calculation.LeaseId,
+                            LeaseNumber = lease.LeaseNumber,
+                            LeaseName = lease.AssetDescription,
+                            LeasePayment = calculation.LeasePayment,
+                            InterestExpense = calculation.InterestExpense,
+                            AmortizationExpense = calculation.AmortizationExpense,
+                            BeginningRightOfUseAsset = calculation.BeginningRightOfUseAsset,
+                            EndingRightOfUseAsset = calculation.EndingRightOfUseAsset,
+                            BeginningLeaseLiability = calculation.BeginningLeaseLiability,
+                            EndingLeaseLiability = calculation.EndingLeaseLiability,
+                            IsPostedToERP = calculation.IsPostedToERP,
+                            Status = calculation.Status
+                        });
+                        
+                        // Generate transactions for unposted calculations
+                        if (!calculation.IsPostedToERP && calculation.Status == CalculationStatus.Calculated)
+                        {
+                            var transactions = await CreateTransactionsFromCalculationAsync(calculation, lease);
+                            allTransactions.AddRange(transactions);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Lease {LeaseId} not found for calculation {CalculationId}", calculation.LeaseId, calculation.Id);
+                    }
+                }
+                
+                var summary = new CalculationSummary
+                {
+                    TotalCalculations = calculations.Count(),
+                    UnpostedCalculations = unpostedCalculations.Count(),
+                    TotalLeasePayments = calculations.Sum(c => c.LeasePayment),
+                    TotalInterestExpense = calculations.Sum(c => c.InterestExpense),
+                    TotalAmortizationExpense = calculations.Sum(c => c.AmortizationExpense),
+                    TotalRightOfUseAssets = calculations.Sum(c => c.EndingRightOfUseAsset),
+                    TotalLeaseLiabilities = calculations.Sum(c => c.EndingLeaseLiability)
+                };
+                
+                _logger.LogInformation("Preview completed for period {PeriodDate}: {TotalCalcs} total, {UnpostedCalcs} unposted, {TransactionCount} transactions", 
+                    periodDate, summary.TotalCalculations, summary.UnpostedCalculations, allTransactions.Count);
+                
+                return new CalculationPreview
+                {
+                    PeriodDate = periodDate,
+                    Calculations = previewItems,
+                    Summary = summary,
+                    ProposedTransactions = allTransactions
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error previewing period calculations for {PeriodDate}", periodDate);
+                throw;
+            }
+        }
+
         public async Task<bool> PostPeriodCalculationsAsync(DateTime periodDate)
         {
             try
@@ -130,7 +212,7 @@ namespace Backend.Services
             };
         }
         
-        public async Task<List<ERPTransaction>> CreateTransactionsFromCalculationAsync(LeaseCalculation calculation, Lease lease)
+        public Task<List<ERPTransaction>> CreateTransactionsFromCalculationAsync(LeaseCalculation calculation, Lease lease)
         {
             var transactions = new List<ERPTransaction>();
             var reference = $"{lease.LeaseNumber}-{calculation.PeriodDate:yyyy-MM}";
@@ -225,7 +307,7 @@ namespace Backend.Services
                 });
             }
             
-            return transactions;
+            return Task.FromResult(transactions);
         }
     }
     

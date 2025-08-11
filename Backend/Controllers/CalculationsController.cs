@@ -74,6 +74,24 @@ namespace Backend.Controllers
             }
         }
         
+        [HttpPost("preview-period")]
+        public async Task<IActionResult> PreviewPeriodCalculations([FromBody] PeriodEndRequest request)
+        {
+            try
+            {
+                _logger.LogInformation("Previewing period calculations for {PeriodDate}", request.PeriodDate);
+                
+                var preview = await _postingService.PreviewPeriodCalculationsAsync(request.PeriodDate);
+                
+                return Ok(preview);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error previewing period calculations for {PeriodDate}", request.PeriodDate);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
         [HttpPost("post-period-to-erp")]
         public async Task<IActionResult> PostPeriodToERP([FromBody] PeriodEndRequest request)
         {

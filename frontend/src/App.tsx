@@ -1,6 +1,33 @@
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Building, Calculator, Upload, Activity, Users, Settings, LogOut } from 'lucide-react';
+import { ThemeProvider } from '@mui/material/styles';
+import { 
+  CssBaseline, 
+  AppBar, 
+  Toolbar, 
+  Typography, 
+  Container, 
+  Box, 
+  Tabs, 
+  Tab, 
+  Button, 
+  Avatar,
+  Menu,
+  MenuItem,
+  Chip
+} from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { 
+  Business as BuildingIcon, 
+  Calculate as CalculatorIcon, 
+  Upload as UploadIcon, 
+  Dashboard as ActivityIcon, 
+  People as UsersIcon, 
+  Settings as SettingsIcon, 
+  Logout as LogOutIcon 
+} from '@mui/icons-material';
+import { theme } from './theme';
 import { LeaseList } from './components/LeaseList';
 import { CalculationDashboard } from './components/CalculationDashboard';
 import { ERPIntegration } from './components/ERPIntegration';
@@ -16,6 +43,7 @@ type TabType = 'leases' | 'calculations' | 'erp' | 'dashboard' | 'tenants' | 'us
 function App() {
   const [currentUser, setCurrentUser] = useState<UserContext | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('leases');
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleLogin = (user: UserContext) => {
     authApi.setCurrentUser(user);
@@ -26,20 +54,40 @@ function App() {
     authApi.logout();
     setCurrentUser(null);
     setActiveTab('leases');
+    setAnchorEl(null);
+  };
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: TabType) => {
+    setActiveTab(newValue);
+  };
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
   };
 
   if (!currentUser) {
-    return <UserLogin onLogin={handleLogin} />;
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <UserLogin onLogin={handleLogin} />
+        </LocalizationProvider>
+      </ThemeProvider>
+    );
   }
 
   const tabs = [
-    { id: 'leases' as const, label: 'Leases', icon: Building },
-    { id: 'calculations' as const, label: 'Calculations', icon: Calculator },
-    { id: 'erp' as const, label: 'ERP Integration', icon: Upload },
-    { id: 'dashboard' as const, label: 'Dashboard', icon: Activity },
+    { id: 'leases' as const, label: 'Leases', icon: <BuildingIcon /> },
+    { id: 'calculations' as const, label: 'Calculations', icon: <CalculatorIcon /> },
+    { id: 'erp' as const, label: 'ERP Integration', icon: <UploadIcon /> },
+    { id: 'dashboard' as const, label: 'Dashboard', icon: <ActivityIcon /> },
     ...(currentUser.isAdmin ? [
-      { id: 'tenants' as const, label: 'Tenants', icon: Settings },
-      { id: 'users' as const, label: 'Users', icon: Users },
+      { id: 'tenants' as const, label: 'Tenants', icon: <SettingsIcon /> },
+      { id: 'users' as const, label: 'Users', icon: <UsersIcon /> },
     ] : []),
   ];
 
@@ -64,66 +112,87 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-6">
-              <div className="flex items-center">
-                <Building className="h-8 w-8 text-blue-600 mr-3" />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">IFRS16 Service</h1>
-                  <p className="text-sm text-gray-500">
-                    {currentUser.isAdmin ? 'System Administrator' : 
-                     currentUser.isTenantAdmin ? `Tenant Admin - ${currentUser.tenantId}` :
-                     `User - ${currentUser.tenantId}`}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">{currentUser.fullName}</p>
-                  <p className="text-sm text-gray-500">{currentUser.email}</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <AppBar position="sticky" color="default" elevation={1}>
+              <Toolbar>
+                <BuildingIcon sx={{ mr: 2, color: 'primary.main' }} />
+                <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: 'text.primary' }}>
+                  IFRS16 Service
+                </Typography>
+                
+                <Chip 
+                  label={currentUser.isAdmin ? 'System Admin' : 
+                        currentUser.isTenantAdmin ? `Tenant Admin - ${currentUser.tenantId}` :
+                        `User - ${currentUser.tenantId}`}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                  sx={{ mr: 2 }}
+                />
+                
+                <Button
+                  onClick={handleMenuClick}
+                  sx={{ textTransform: 'none' }}
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
+                  <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', mr: 1 }}>
+                    {currentUser.fullName.charAt(0)}
+                  </Avatar>
+                  <Box sx={{ textAlign: 'left', display: { xs: 'none', sm: 'block' } }}>
+                    <Typography variant="body2" sx={{ color: 'text.primary' }}>
+                      {currentUser.fullName}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      {currentUser.email}
+                    </Typography>
+                  </Box>
+                </Button>
+                
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl)}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                  <MenuItem onClick={handleLogout}>
+                    <LogOutIcon sx={{ mr: 1 }} />
+                    Logout
+                  </MenuItem>
+                </Menu>
+              </Toolbar>
+            </AppBar>
 
-        <nav className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex space-x-8">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center px-3 py-4 text-sm font-medium border-b-2 transition-colors ${
-                      activeTab === tab.id
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4 mr-2" />
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </nav>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
+              <Container maxWidth="xl">
+                <Tabs 
+                  value={activeTab} 
+                  onChange={handleTabChange}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                >
+                  {tabs.map((tab) => (
+                    <Tab 
+                      key={tab.id} 
+                      value={tab.id}
+                      label={tab.label}
+                      icon={tab.icon}
+                      iconPosition="start"
+                      sx={{ textTransform: 'none', minHeight: 64 }}
+                    />
+                  ))}
+                </Tabs>
+              </Container>
+            </Box>
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {renderContent()}
-        </main>
-      </div>
+            <Container maxWidth="xl" sx={{ flex: 1, py: 3 }}>
+              {renderContent()}
+            </Container>
+          </Box>
+        </LocalizationProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

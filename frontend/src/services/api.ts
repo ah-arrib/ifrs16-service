@@ -7,7 +7,8 @@ import type {
   PostingRequest,
   Tenant,
   User,
-  UserContext
+  UserContext,
+  CalculationPreview
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:7297/api';
@@ -170,12 +171,22 @@ export const leaseApi = {
     const response = await api.get(`/leases/${id}/calculations`);
     return response.data;
   },
+
+  getCalculationDetail: async (leaseId: number, calculationId: number): Promise<LeaseCalculation> => {
+    const response = await api.get(`/leases/${leaseId}/calculations/${calculationId}`);
+    return response.data;
+  },
 };
 
 // Calculations API
 export const calculationsApi = {
   runPeriodEnd: async (request: PeriodEndRequest): Promise<{ success: boolean; message: string }> => {
     const response = await api.post('/calculations/period-end', request);
+    return response.data;
+  },
+
+  previewPeriod: async (request: PeriodEndRequest): Promise<CalculationPreview> => {
+    const response = await api.post('/calculations/preview-period', request);
     return response.data;
   },
 

@@ -198,7 +198,7 @@ namespace Backend.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
-        
+
         [HttpGet("{id}/calculations")]
         public async Task<ActionResult<IEnumerable<LeaseCalculation>>> GetLeaseCalculations(int id)
         {
@@ -207,15 +207,50 @@ namespace Backend.Controllers
                 var lease = await _leaseRepository.GetByIdAsync(id);
                 if (lease == null)
                 {
-                    return NotFound();
+                    return NotFound("Lease not found");
                 }
                 
+                _logger.LogInformation("Getting calculations for lease {LeaseId}", id);
+                
                 var calculations = await _calculationRepository.GetByLeaseIdAsync(id);
-                return Ok(calculations);
+                
+                // Order by calculation date descending (most recent first)
+                var orderedCalculations = calculations.OrderByDescending(c => c.CalculationDate).ToList();
+                
+                return Ok(orderedCalculations);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving calculations for lease {LeaseId}", id);
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpGet("{id}/calculations/{calculationId}")]
+        public async Task<ActionResult<LeaseCalculation>> GetLeaseCalculationDetail(int id, int calculationId)
+        {
+            try
+            {
+                var lease = await _leaseRepository.GetByIdAsync(id);
+                if (lease == null)
+                {
+                    return NotFound("Lease not found");
+                }
+                
+                _logger.LogInformation("Getting calculation detail {CalculationId} for lease {LeaseId}", calculationId, id);
+                
+                var calculation = await _calculationRepository.GetByIdAsync(calculationId);
+                
+                if (calculation == null || calculation.LeaseId != id)
+                {
+                    return NotFound($"Calculation {calculationId} not found for lease {id}");
+                }
+                
+                return Ok(calculation);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting calculation detail {CalculationId} for lease {LeaseId}", calculationId, id);
                 return StatusCode(500, "Internal server error");
             }
         }
