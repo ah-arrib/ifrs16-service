@@ -1,4 +1,26 @@
 import React, { useState } from 'react';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Divider,
+  Container,
+  Stack,
+  Chip
+} from '@mui/material';
+import {
+  Login as LoginIcon,
+  Business as BusinessIcon,
+  Person as PersonIcon,
+  AdminPanelSettings as AdminIcon
+} from '@mui/icons-material';
 import type { UserContext } from '../types';
 import { UserRole } from '../types';
 
@@ -53,114 +75,141 @@ export const UserLogin: React.FC<UserLoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          IFRS16 Service Demo Login
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Multi-tenant lease accounting system
-        </p>
-      </div>
+    <Box 
+      sx={{ 
+        minHeight: '100vh',
+        bgcolor: 'grey.50',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        py: 6
+      }}
+    >
+      <Container maxWidth="sm">
+        {/* Header */}
+        <Box textAlign="center" mb={4}>
+          <Typography variant="h3" component="h1" fontWeight="bold" gutterBottom>
+            IFRS16 Service Demo Login
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Multi-tenant lease accounting system
+          </Typography>
+        </Box>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <div className="space-y-6">
-            {/* Quick Login Options */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Login</h3>
-              <div className="space-y-2">
-                {demoUsers.map((user) => (
-                  <button
-                    key={user.id}
-                    onClick={() => handleQuickLogin(user)}
-                    className="w-full flex justify-between items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    <span>{user.label}</span>
-                    <span className="text-xs text-gray-500">
-                      {user.role} {user.tenantId && `(${user.tenantId})`}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+        <Card elevation={3}>
+          <CardContent sx={{ p: 4 }}>
+            <Stack spacing={4}>
+              {/* Quick Login Options */}
+              <Box>
+                <Typography variant="h6" component="h3" gutterBottom>
+                  Quick Login
+                </Typography>
+                <Stack spacing={1}>
+                  {demoUsers.map((user) => (
+                    <Button
+                      key={user.id}
+                      variant="outlined"
+                      fullWidth
+                      onClick={() => handleQuickLogin(user)}
+                      sx={{
+                        justifyContent: 'space-between',
+                        textTransform: 'none',
+                        py: 1.5
+                      }}
+                    >
+                      <Box display="flex" alignItems="center">
+                        {user.role === UserRole.Admin ? (
+                          <AdminIcon sx={{ mr: 1, fontSize: 'small' }} />
+                        ) : user.role === UserRole.TenantAdmin ? (
+                          <BusinessIcon sx={{ mr: 1, fontSize: 'small' }} />
+                        ) : (
+                          <PersonIcon sx={{ mr: 1, fontSize: 'small' }} />
+                        )}
+                        <Typography variant="body2" fontWeight="medium">
+                          {user.label}
+                        </Typography>
+                      </Box>
+                      <Chip 
+                        label={`${user.role}${user.tenantId ? ` (${user.tenantId})` : ''}`}
+                        size="small"
+                        variant="outlined"
+                      />
+                    </Button>
+                  ))}
+                </Stack>
+              </Box>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or customize</span>
-              </div>
-            </div>
+              <Divider sx={{ my: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Or customize
+                </Typography>
+              </Divider>
 
-            {/* Custom Login */}
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="userId" className="block text-sm font-medium text-gray-700">
-                  User ID
-                </label>
-                <input
-                  id="userId"
-                  type="text"
+              {/* Custom Login */}
+              <Stack spacing={3}>
+                <TextField
+                  fullWidth
+                  label="User ID"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   placeholder="Enter user ID"
+                  variant="outlined"
                 />
-              </div>
 
-              <div>
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                  Role
-                </label>
-                <select
-                  id="role"
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                >
-                  <option value={UserRole.Admin}>System Admin (All Tenants)</option>
-                  <option value={UserRole.TenantAdmin}>Tenant Admin</option>
-                  <option value={UserRole.User}>Regular User</option>
-                </select>
-              </div>
-
-              {selectedRole !== UserRole.Admin && (
-                <div>
-                  <label htmlFor="tenant" className="block text-sm font-medium text-gray-700">
-                    Tenant
-                  </label>
-                  <select
-                    id="tenant"
-                    value={selectedTenant}
-                    onChange={(e) => setSelectedTenant(e.target.value)}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                <FormControl fullWidth>
+                  <InputLabel>Role</InputLabel>
+                  <Select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    label="Role"
                   >
-                    {tenants.map((tenant) => (
-                      <option key={tenant.id} value={tenant.id}>
-                        {tenant.name} ({tenant.id})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+                    <MenuItem value={UserRole.Admin}>System Admin (All Tenants)</MenuItem>
+                    <MenuItem value={UserRole.TenantAdmin}>Tenant Admin</MenuItem>
+                    <MenuItem value={UserRole.User}>Regular User</MenuItem>
+                  </Select>
+                </FormControl>
 
-              <button
-                onClick={handleCustomLogin}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Login as Custom User
-              </button>
-            </div>
-          </div>
-        </div>
+                {selectedRole !== UserRole.Admin && (
+                  <FormControl fullWidth>
+                    <InputLabel>Tenant</InputLabel>
+                    <Select
+                      value={selectedTenant}
+                      onChange={(e) => setSelectedTenant(e.target.value)}
+                      label="Tenant"
+                    >
+                      {tenants.map((tenant) => (
+                        <MenuItem key={tenant.id} value={tenant.id}>
+                          {tenant.name} ({tenant.id})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
 
-        <div className="mt-6 text-center text-xs text-gray-500">
-          <p>This is a demo environment.</p>
-          <p>In production, users would authenticate through your identity provider.</p>
-        </div>
-      </div>
-    </div>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  onClick={handleCustomLogin}
+                  startIcon={<LoginIcon />}
+                  sx={{ py: 1.5 }}
+                >
+                  Login as Custom User
+                </Button>
+              </Stack>
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <Box textAlign="center" mt={3}>
+          <Typography variant="caption" color="text.secondary" display="block">
+            This is a demo environment.
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            In production, users would authenticate through your identity provider.
+          </Typography>
+        </Box>
+      </Container>
+    </Box>
   );
 };
