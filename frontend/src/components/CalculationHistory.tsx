@@ -1,5 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Calendar, Eye, TrendingUp, TrendingDown, DollarSign, ArrowLeft, FileText } from 'lucide-react';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  CircularProgress,
+  Alert
+} from '@mui/material';
+import {
+  ArrowBack as ArrowBackIcon,
+  Visibility as VisibilityIcon,
+  CalendarToday as CalendarIcon,
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  AccountBalance as AccountBalanceIcon,
+  Description as DescriptionIcon
+} from '@mui/icons-material';
 import { leaseApi } from '../services/api';
 import type { Lease, LeaseCalculation, CalculationStatus } from '../types';
 
@@ -64,49 +88,56 @@ export function CalculationHistory({ lease, onBack }: CalculationHistoryProps) {
   const getStatusBadge = (status: CalculationStatus, isPosted: boolean) => {
     if (isPosted) {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          Posted to ERP
-        </span>
+        <Chip
+          label="Posted to ERP"
+          size="small"
+          color="success"
+          variant="filled"
+        />
       );
     }
 
     const statusMap = {
-      0: { label: 'Draft', color: 'bg-gray-100 text-gray-800' },
-      1: { label: 'Calculated', color: 'bg-blue-100 text-blue-800' },
-      2: { label: 'Posted', color: 'bg-green-100 text-green-800' },
-      3: { label: 'Failed', color: 'bg-red-100 text-red-800' },
+      0: { label: 'Draft', color: 'default' as const },
+      1: { label: 'Calculated', color: 'primary' as const },
+      2: { label: 'Posted', color: 'success' as const },
+      3: { label: 'Failed', color: 'error' as const },
     };
 
     const statusInfo = statusMap[status] || statusMap[0];
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}>
-        {statusInfo.label}
-      </span>
+      <Chip
+        label={statusInfo.label}
+        size="small"
+        color={statusInfo.color}
+        variant="filled"
+      />
     );
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
+      <Box display="flex" alignItems="center" justifyContent="center" height="16rem">
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (selectedCalculation) {
     return (
-      <div className="space-y-6">
+      <Box sx={{ spacing: 3 }}>
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <button
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+          <Button
+            variant="text"
+            startIcon={<ArrowBackIcon />}
             onClick={() => setSelectedCalculation(null)}
-            className="flex items-center text-blue-600 hover:text-blue-800"
+            sx={{ color: 'primary.main' }}
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Calculation List
-          </button>
-        </div>
+          </Button>
+        </Box>
 
         {/* Calculation Detail */}
         <div className="bg-white shadow rounded-lg p-6">
@@ -203,156 +234,162 @@ export function CalculationHistory({ lease, onBack }: CalculationHistoryProps) {
             </div>
           </div>
         </div>
-      </div>
+      </Box>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ spacing: 3 }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <button
+      <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+        <Box display="flex" alignItems="center">
+          <Button
+            variant="text"
+            startIcon={<ArrowBackIcon />}
             onClick={onBack}
-            className="flex items-center text-blue-600 hover:text-blue-800 mr-4"
+            sx={{ color: 'primary.main', mr: 2 }}
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Leases
-          </button>
-          <h2 className="text-2xl font-bold text-gray-900">
+          </Button>
+          <Typography variant="h4" component="h2">
             Calculation History - {lease.leaseNumber}
-          </h2>
-        </div>
-      </div>
+          </Typography>
+        </Box>
+      </Box>
 
       {/* Lease Summary */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Lease Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <p className="text-sm text-gray-600">Asset Description</p>
-            <p className="font-medium text-gray-900">{lease.assetDescription}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Lease Term</p>
-            <p className="font-medium text-gray-900">
-              {formatDate(lease.commencementDate)} - {formatDate(lease.endDate)}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Monthly Payment</p>
-            <p className="font-medium text-gray-900 text-right">{formatCurrency(lease.leasePayment)}</p>
-          </div>
-        </div>
-      </div>
+      <Card>
+        <CardContent>
+          <Typography variant="h6" component="h3" gutterBottom>
+            Lease Summary
+          </Typography>
+          <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>
+            <Box flex={1}>
+              <Typography variant="body2" color="text.secondary">
+                Asset Description
+              </Typography>
+              <Typography variant="body1" fontWeight="medium">
+                {lease.assetDescription}
+              </Typography>
+            </Box>
+            <Box flex={1}>
+              <Typography variant="body2" color="text.secondary">
+                Lease Term
+              </Typography>
+              <Typography variant="body1" fontWeight="medium">
+                {formatDate(lease.commencementDate)} - {formatDate(lease.endDate)}
+              </Typography>
+            </Box>
+            <Box flex={1}>
+              <Typography variant="body2" color="text.secondary">
+                Monthly Payment
+              </Typography>
+              <Typography variant="body1" fontWeight="medium" textAlign="right">
+                {formatCurrency(lease.leasePayment)}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <p className="text-sm text-red-800">{error}</p>
-        </div>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
       )}
 
       {/* Calculations List */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-900">Calculation History</h3>
-            <div className="flex items-center text-sm text-gray-600">
-              <Calendar className="h-4 w-4 mr-1" />
-              {calculations.length} calculations
-            </div>
-          </div>
-        </div>
+      <Card>
+        <CardContent>
+          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+            <Typography variant="h6" component="h3">
+              Calculation History
+            </Typography>
+            <Box display="flex" alignItems="center">
+              <CalendarIcon sx={{ mr: 1, fontSize: 'small' }} />
+              <Typography variant="body2" color="text.secondary">
+                {calculations.length} calculations
+              </Typography>
+            </Box>
+          </Box>
 
         {calculations.length === 0 ? (
-          <div className="text-center py-12">
-            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No calculations found for this lease.</p>
-            <p className="text-sm text-gray-500 mt-2">
+          <Box textAlign="center" py={6}>
+            <DescriptionIcon sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
+            <Typography variant="body1" color="text.secondary" gutterBottom>
+              No calculations found for this lease.
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
               Run calculations to see the lease schedule here.
-            </p>
-          </div>
+            </Typography>
+          </Box>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Period Date
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Lease Payment
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Interest Expense
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amortization
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ROU Asset Balance
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Liability Balance
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Period Date</TableCell>
+                  <TableCell align="right">Lease Payment</TableCell>
+                  <TableCell align="right">Interest Expense</TableCell>
+                  <TableCell align="right">Amortization</TableCell>
+                  <TableCell align="right">ROU Asset Balance</TableCell>
+                  <TableCell align="right">Liability Balance</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {calculations.map((calculation) => (
-                  <tr key={calculation.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <TableRow key={calculation.id} hover>
+                    <TableCell>
                       {formatDate(calculation.periodDate)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      <div className="flex items-center justify-end">
-                        <DollarSign className="h-4 w-4 text-blue-500 mr-1" />
+                    </TableCell>
+                    <TableCell align="right">
+                      <Box display="flex" alignItems="center" justifyContent="flex-end">
+                        <AccountBalanceIcon sx={{ fontSize: 'small', color: 'primary.main', mr: 0.5 }} />
                         {formatCurrency(calculation.leasePayment)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      <div className="flex items-center justify-end">
-                        <TrendingUp className="h-4 w-4 text-red-500 mr-1" />
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Box display="flex" alignItems="center" justifyContent="flex-end">
+                        <TrendingUpIcon sx={{ fontSize: 'small', color: 'error.main', mr: 0.5 }} />
                         {formatCurrency(calculation.interestExpense)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      <div className="flex items-center justify-end">
-                        <TrendingDown className="h-4 w-4 text-orange-500 mr-1" />
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Box display="flex" alignItems="center" justifyContent="flex-end">
+                        <TrendingDownIcon sx={{ fontSize: 'small', color: 'warning.main', mr: 0.5 }} />
                         {formatCurrency(calculation.amortizationExpense)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right">
                       {formatCurrency(calculation.endingRightOfUseAsset)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                    </TableCell>
+                    <TableCell align="right">
                       {formatCurrency(calculation.endingLeaseLiability)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    </TableCell>
+                    <TableCell>
                       {getStatusBadge(calculation.status, calculation.isPostedToERP)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="text"
+                        size="small"
                         onClick={() => handleViewCalculation(calculation.id)}
-                        className="text-blue-600 hover:text-blue-900 flex items-center"
+                        startIcon={<VisibilityIcon />}
                       >
-                        <Eye className="h-4 w-4 mr-1" />
                         View Details
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
