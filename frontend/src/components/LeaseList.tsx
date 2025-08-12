@@ -23,8 +23,6 @@ import {
   DialogActions,
   Fab,
   Tooltip,
-  FormControlLabel,
-  Switch,
 } from '@mui/material';
 import {
   Add as PlusIcon,
@@ -50,14 +48,15 @@ export function LeaseList({ currentUser }: LeaseListProps) {
   const [viewingCalculations, setViewingCalculations] = useState<Lease | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [leaseToDelete, setLeaseToDelete] = useState<Lease | null>(null);
-  const [showAllTenants, setShowAllTenants] = useState(currentUser.isAdmin);
 
   const { data: leases, isLoading, error, refetch } = useQuery({
-    queryKey: ['leases', currentUser.tenantId, showAllTenants],
+    queryKey: ['leases', currentUser.tenantId, currentUser.isAdmin],
     queryFn: () => {
-      if (currentUser.isAdmin && showAllTenants) {
+      if (currentUser.isAdmin) {
+        // System admins automatically see all tenants
         return leaseApi.getAll(undefined, true);
       }
+      // Regular users see only their tenant
       return leaseApi.getAll(currentUser.tenantId);
     },
   });
@@ -154,16 +153,12 @@ export function LeaseList({ currentUser }: LeaseListProps) {
           <Typography variant="h4" component="h1">
             Lease Management
           </Typography>
-          {currentUser.isAdmin && (
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={showAllTenants}
-                  onChange={(e) => setShowAllTenants(e.target.checked)}
-                  size="small"
-                />
-              }
-              label="Show All Tenants"
+          {leases && (
+            <Chip 
+              label={`${leases.length} lease${leases.length !== 1 ? 's' : ''}`}
+              size="small"
+              color="primary"
+              variant="outlined"
             />
           )}
         </Box>

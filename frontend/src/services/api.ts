@@ -11,7 +11,7 @@ import type {
   CalculationPreview
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:7297/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5114/api';
 
 // Demo authentication headers - in production, this would come from your auth system
 let currentUser: UserContext | null = null;
