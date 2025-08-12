@@ -30,17 +30,26 @@ namespace Backend.Controllers
         }
         
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Lease>>> GetLeases([FromQuery] string? tenantId = null)
+        public async Task<ActionResult<IEnumerable<Lease>>> GetLeases([FromQuery] string? tenantId = null, [FromQuery] bool allTenants = false)
         {
             try
             {
-                // Check tenant access for non-admin users
-                if (!_tenantContext.IsAdminUser() && tenantId != null && !_tenantContext.CanAccessTenant(tenantId))
+                // Admin users can view all tenants if requested
+                if (allTenants && !_tenantContext.IsAdminUser())
                 {
-                    return Forbid("Access denied to tenant data");
+                    return BadRequest("Only admin users can view all tenants");
                 }
 
-                var leases = await _leaseRepository.GetAllAsync(tenantId);
+                // For admin users requesting all tenants, pass null to get all leases
+                var effectiveTenantId = (allTenants && _tenantContext.IsAdminUser()) ? null : tenantId;
+
+                // Check tenant access for non-admin users
+                if (!_tenantContext.IsAdminUser() && effectiveTenantId != null && !_tenantContext.CanAccessTenant(effectiveTenantId))
+                {
+                    return BadRequest("Access denied to tenant data");
+                }
+
+                var leases = await _leaseRepository.GetAllAsync(effectiveTenantId);
                 return Ok(leases);
             }
             catch (Exception ex)

@@ -16,6 +16,7 @@ export interface TenantSettings {
   enableERPIntegration: boolean;
   erpBaseUrl?: string;
   erpApiKey?: string;
+  erpSystemId?: string;
 }
 
 export interface User {
@@ -56,6 +57,7 @@ export type UserRole = typeof UserRole[keyof typeof UserRole];
 export interface Lease {
   id: number;
   tenantId: string; // Multi-tenant field
+  tenantName?: string; // Tenant display name for admin users
   leaseNumber: string;
   assetDescription: string;
   commencementDate: string;

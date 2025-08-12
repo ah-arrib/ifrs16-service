@@ -10,6 +10,8 @@ namespace Backend.Models
         [StringLength(50)]
         public string TenantId { get; set; } = string.Empty; // Multi-tenant isolation
         
+        public string? TenantName { get; set; } // Tenant display name for admin users
+        
         [Required]
         public string LeaseNumber { get; set; } = string.Empty;
         

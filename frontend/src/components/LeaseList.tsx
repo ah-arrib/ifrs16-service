@@ -23,13 +23,16 @@ import {
   DialogActions,
   Fab,
   Tooltip,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import {
   Add as PlusIcon,
   Edit as EditIcon,
   Delete as TrashIcon,
   Calculate as CalculatorIcon,
-  History as HistoryIcon
+  History as HistoryIcon,
+  Business as BusinessIcon
 } from '@mui/icons-material';
 import { leaseApi } from '../services/api';
 import type { Lease, UserContext } from '../types';
@@ -47,10 +50,16 @@ export function LeaseList({ currentUser }: LeaseListProps) {
   const [viewingCalculations, setViewingCalculations] = useState<Lease | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [leaseToDelete, setLeaseToDelete] = useState<Lease | null>(null);
+  const [showAllTenants, setShowAllTenants] = useState(currentUser.isAdmin);
 
   const { data: leases, isLoading, error, refetch } = useQuery({
-    queryKey: ['leases', currentUser.tenantId],
-    queryFn: () => leaseApi.getAll(currentUser.tenantId),
+    queryKey: ['leases', currentUser.tenantId, showAllTenants],
+    queryFn: () => {
+      if (currentUser.isAdmin && showAllTenants) {
+        return leaseApi.getAll(undefined, true);
+      }
+      return leaseApi.getAll(currentUser.tenantId);
+    },
   });
 
   const handleEdit = (lease: Lease) => {
@@ -141,9 +150,23 @@ export function LeaseList({ currentUser }: LeaseListProps) {
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          Lease Management
-        </Typography>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Typography variant="h4" component="h1">
+            Lease Management
+          </Typography>
+          {currentUser.isAdmin && (
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={showAllTenants}
+                  onChange={(e) => setShowAllTenants(e.target.checked)}
+                  size="small"
+                />
+              }
+              label="Show All Tenants"
+            />
+          )}
+        </Box>
         <Button
           variant="contained"
           startIcon={<PlusIcon />}
@@ -167,6 +190,7 @@ export function LeaseList({ currentUser }: LeaseListProps) {
             <TableRow>
               <TableCell>Lease Number</TableCell>
               <TableCell>Asset Description</TableCell>
+              {currentUser.isAdmin && <TableCell>Tenant</TableCell>}
               <TableCell>Status</TableCell>
               <TableCell align="right">Payment</TableCell>
               <TableCell>Term</TableCell>
@@ -188,6 +212,23 @@ export function LeaseList({ currentUser }: LeaseListProps) {
                     {lease.assetDescription}
                   </Typography>
                 </TableCell>
+                {currentUser.isAdmin && (
+                  <TableCell>
+                    <Box display="flex" alignItems="center">
+                      <BusinessIcon sx={{ mr: 1, fontSize: 'small', color: 'primary.main' }} />
+                      <Box>
+                        <Typography variant="body2" fontWeight="medium">
+                          {lease.tenantName || lease.tenantId}
+                        </Typography>
+                        {lease.tenantName && (
+                          <Typography variant="caption" color="textSecondary">
+                            {lease.tenantId}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  </TableCell>
+                )}
                 <TableCell>
                   <Chip
                     label={LeaseStatusLabels[lease.status]}

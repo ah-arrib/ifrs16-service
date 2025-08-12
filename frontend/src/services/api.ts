@@ -133,8 +133,11 @@ export const userApi = {
 
 // Lease API (updated for multi-tenancy)
 export const leaseApi = {
-  getAll: async (tenantId?: string): Promise<Lease[]> => {
-    const params = tenantId ? { tenantId } : {};
+  getAll: async (tenantId?: string, allTenants = false): Promise<Lease[]> => {
+    const params: { tenantId?: string; allTenants?: boolean } = {};
+    if (tenantId) params.tenantId = tenantId;
+    if (allTenants) params.allTenants = allTenants;
+    
     const response = await api.get('/leases', { params });
     return response.data;
   },

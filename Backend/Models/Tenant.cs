@@ -31,4 +31,5 @@ public class TenantSettings
     public bool EnableERPIntegration { get; set; } = true;
     public string? ERPBaseUrl { get; set; }
     public string? ERPApiKey { get; set; }
+    public Guid? ERPSystemId { get; set; }
 }

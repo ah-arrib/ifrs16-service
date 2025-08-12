@@ -45,17 +45,18 @@ namespace Backend.Repositories
             var effectiveTenantId = GetEffectiveTenantId(tenantId);
             
             var sql = @"
-                SELECT Id, TenantId, LeaseNumber, AssetDescription, CommencementDate, EndDate, 
-                       LeasePayment, PaymentFrequency, DiscountRate, InitialRightOfUseAsset, 
-                       InitialLeaseLiability, Currency, ERPAssetId, Status, CreatedDate, LastCalculationDate
-                FROM Leases";
+                SELECT l.Id, l.TenantId, t.TenantName, l.LeaseNumber, l.AssetDescription, l.CommencementDate, l.EndDate, 
+                       l.LeasePayment, l.PaymentFrequency, l.DiscountRate, l.InitialRightOfUseAsset, 
+                       l.InitialLeaseLiability, l.Currency, l.ERPAssetId, l.Status, l.CreatedDate, l.LastCalculationDate
+                FROM Leases l
+                LEFT JOIN Tenants t ON l.TenantId = t.TenantId";
             
             if (effectiveTenantId != null)
             {
-                sql += " WHERE TenantId = @TenantId";
+                sql += " WHERE l.TenantId = @TenantId";
             }
             
-            sql += " ORDER BY CreatedDate DESC";
+            sql += " ORDER BY l.CreatedDate DESC";
             
             return await connection.QueryAsync<Lease>(sql, new { TenantId = effectiveTenantId });
         }
@@ -66,15 +67,16 @@ namespace Backend.Repositories
             var effectiveTenantId = GetEffectiveTenantId(tenantId);
             
             var sql = @"
-                SELECT Id, TenantId, LeaseNumber, AssetDescription, CommencementDate, EndDate, 
-                       LeasePayment, PaymentFrequency, DiscountRate, InitialRightOfUseAsset, 
-                       InitialLeaseLiability, Currency, ERPAssetId, Status, CreatedDate, LastCalculationDate
-                FROM Leases 
-                WHERE Id = @Id";
+                SELECT l.Id, l.TenantId, t.TenantName, l.LeaseNumber, l.AssetDescription, l.CommencementDate, l.EndDate, 
+                       l.LeasePayment, l.PaymentFrequency, l.DiscountRate, l.InitialRightOfUseAsset, 
+                       l.InitialLeaseLiability, l.Currency, l.ERPAssetId, l.Status, l.CreatedDate, l.LastCalculationDate
+                FROM Leases l
+                LEFT JOIN Tenants t ON l.TenantId = t.TenantId
+                WHERE l.Id = @Id";
             
             if (effectiveTenantId != null)
             {
-                sql += " AND TenantId = @TenantId";
+                sql += " AND l.TenantId = @TenantId";
             }
             
             return await connection.QueryFirstOrDefaultAsync<Lease>(sql, new { Id = id, TenantId = effectiveTenantId });
@@ -212,12 +214,13 @@ namespace Backend.Repositories
             }
             
             var sql = @"
-                SELECT Id, TenantId, LeaseNumber, AssetDescription, CommencementDate, EndDate, 
-                       LeasePayment, PaymentFrequency, DiscountRate, InitialRightOfUseAsset, 
-                       InitialLeaseLiability, Currency, ERPAssetId, Status, CreatedDate, LastCalculationDate
-                FROM Leases 
-                WHERE TenantId = @TenantId
-                ORDER BY CreatedDate DESC";
+                SELECT l.Id, l.TenantId, t.TenantName, l.LeaseNumber, l.AssetDescription, l.CommencementDate, l.EndDate, 
+                       l.LeasePayment, l.PaymentFrequency, l.DiscountRate, l.InitialRightOfUseAsset, 
+                       l.InitialLeaseLiability, l.Currency, l.ERPAssetId, l.Status, l.CreatedDate, l.LastCalculationDate
+                FROM Leases l
+                LEFT JOIN Tenants t ON l.TenantId = t.TenantId
+                WHERE l.TenantId = @TenantId
+                ORDER BY l.CreatedDate DESC";
             
             return await connection.QueryAsync<Lease>(sql, new { TenantId = tenantId });
         }
